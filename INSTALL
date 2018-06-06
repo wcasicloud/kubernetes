@@ -1,0 +1,116 @@
+系统信息：Centos7.2
+主机名称：
+10.153.51.15  ansible.k8s.htyunlu.com
+10.153.51.16  registry.k8s.htyunlu.com
+10.153.51.17  etcd01.k8s.htyunlu.com
+10.153.51.18  etcd02.k8s.htyunlu.com
+10.153.51.19  etcd03.k8s.htyunlu.com
+10.153.51.20  master01.k8s.htyunlu.com
+10.153.51.21  master02.k8s.htyunlu.com
+10.153.51.217 master03.k8s.htyunlu.com
+10.153.51.22  node01.k8s.htyunlu.com
+10.153.51.23  node02.k8s.htyunlu.com
+10.153.51.24  node03.k8s.htyunlu.com
+vip: 10.153.51.221
+
+软件版本：
+docker18.05.0-ce
+socat-1.7.3.2-2.el7.x86_64
+kubelet-1.10.0-0.x86_64
+kubernetes-cni-0.6.0-0.x86_64
+kubectl-1.10.0-0.x86_64
+kubeadm-1.10.0-0.x86_64
+
+一、环境初始化
+1、分别在11台主机上设置主机名
+   # systemctl set-hostname < hostname >
+
+2、配置主机映射，添加hosts记录或者DNS解析，
+   # cat <<EOF > /etc/hosts
+   10.153.51.15  ansible.k8s.htyunlu.com
+   10.153.51.16  registry.k8s.htyunlu.com
+   ......
+   EOF
+
+3、在ansible.k8s.htyunlu.com进行免密钥登录配置
+   # ssh-keygen -t rsa  #一路回车
+   # ssh-copy-id <hostname>
+
+4、在每台主机上配置，停防火墙、关闭swap、关闭Selinux、设置内核、k8s源、安装依赖包、 配置时间同步
+   # ansible all -u root -i hosts -m shell -a "systemctl stop firewalld"
+   # ansible all -u root -i hosts -m copy -a "src=script/disable_swap.sh dest=/root/disable_swap.sh mode=a+x"
+   # ansible all -u root -i hosts -m shell -a "setenforce 0"
+   # ansible all -u root -i hosts -m copy -a "src=k8s.conf dest=/etc/sysctl.d/k8s.conf"
+   # yum install -y epel-release
+   # yum install -y yum-utils device-mapper-persistent-data lvm2 net-tools conntrack-tools wget vim  ntpdate libseccomp libtool-ltdl
+
+二、安装keepalived(主节点)
+1、安装keepalived
+   # ansible-playbook -u root -i hosts keepalived_site.yml
+三、创建etcd证书，在ansible服务器上执行即可
+1、设置cfssl环境，脚本在certificates目录
+   # chmod a+x cfssl_install.sh
+   # ./cfssl_install.sh
+2、创建CA配置文件，配置文件的IP为etcd节点地址
+   # mkdir -pv /data/app/ssl
+   # cd /data/app/ssl
+   CA配置文件在certificates/certs目录下，配置文件为ca-config.json
+   根证书生成
+   # cfssl gencert -initca ca-csr.json | cfssljson -bare ca
+   kubernetes和etcd使用证书
+   # cfssl gencert -ca=ca.pem \
+  -ca-key=ca-key.pem \
+  -config=ca-config.json \
+  -profile=kubernetes-Soulmate kubernetes-csr.json | cfssljson -bare kubernetes
+3、分发证书，把证书分发到etcd节点和master节点
+  # ansible etcd_servers -i hosts -m shell -a "mkdir -pv /etc/kubernetes/ssl"
+  # ansible k8s_api_servers -i hosts -m shell -a "mkdir -pv .....(一样目录)"
+  # ansible etcd_servers -i hosts -m copy -a "src=/data/app/ssl/*.pem dest=/etc/kubernetes/ssl"
+  # ansible k8s_api_servers -i hosts -m copy -a "src=/data/app/ssl/*.pem dest=/etc/kubernetes/ssl"
+四、安装配置etcd
+1、可以通过ansible进行安装配置
+  # ansible-playbook -u root -i hosts etcd_site.yml
+2、安装完成后，对etcd集群检查
+  # etcdctl --endpoints=https://10.153.51.17:2379,https://10.153.51.18:2379,https://10.153.51.19:2379 \
+  --ca-file=/etc/kubernetes/ssl/ca.pem \
+  --cert-file=/etc/kubernetes/ssl/kubernetes.pem \
+  --key-file=/etc/kubernetes/ssl/kubernetes-key.pem  cluster-health
+五、所有节点安装配置docker和kube相关组件
+1、docker和kube
+  # ansible-playbook -u root -i hosts site.yml
+  # ansible-playbook -u root -i hosts kube_site.yml
+2、命令补全
+  # yum install -y bash-completion
+  # source /usr/share/bash-completion/bash_completion
+  # source <(kubectl completion bash)
+  # echo "source <(kubectl completion bash)" >> ~/.bashrc
+六、初始化集群
+1、在master01上进行集群初始化，配置文件在yml/yaml目录下
+  # kubeadm init --config config.yaml
+  初始化失败操作
+  # kubeadm reset
+  或者
+  # rm -rf /etc/kubernetes/*.conf
+  # rm -rf /etc/kubernetes/manifests/*.yaml
+2、master01上执行如下操作
+  # mkdir -p $HOME/.kube
+  # sudo cp -i /etc/kubernetes/admin.conf $HOME/.kube/config
+  # sudo chown $(id -u):$(id -g) $HOME/.kube/config
+3、kubeadm生成的证书密码文件分发到master02和master03节点上去
+  # scp -r /etc/kubernetes/pki  master02:/etc/kubernetes/
+  # scp -r /etc/kubernetes/pki  master03:/etc/kubernetes/
+4、部署flannel网络，只在master01上执行就行
+  # wget https://raw.githubusercontent.com/coreos/flannel/master/Documentation/kube-flannel.yml
+#版本信息：quay.io/coreos/flannel:v0.10.0-amd64
+  # kubectl create -f  kube-flannel.yml
+  # kubectl get node   查看节点
+5、部署dashboard,yaml文件在yml/yaml目录中
+  # kubectl create -f kubernetes-dashboard.yaml
+  获取token通过令牌登录
+  # kubectl -n kube-system describe secret $(kubectl -n kube-system get secret | grep admin-user | awk '{print $1}')
+6、安装heapster，相关配置文件在yml目录
+  # kubectl create -f kube-heapster/influxdb/
+7、分别在master02和master03进行集群初始化
+8、让master运行pod
+  # kubectl taint nodes --all node-role.kubernetes.io/master-
+9、添加节点到集群，将join_node.sh脚本分发到node节点，然后执行即可把节点加入到集群

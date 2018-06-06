@@ -1,0 +1,7 @@
+---
+keepalived_instances:
+    VI_1:
+        interface: eth0
+        virtual_router_id: 11
+        vips:
+            - 10.153.51.221/16

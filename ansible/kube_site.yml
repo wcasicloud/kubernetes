@@ -1,0 +1,6 @@
+---
+# home page deploy script
+# main entry for setup php web servers
+- hosts: k8s_api_servers
+  roles:
+    - role: kube

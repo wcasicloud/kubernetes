@@ -1,0 +1,4 @@
+---
+# defaults file for keepalived
+keepalived_router_id: k8k8s_cluster
+keepalived_instances: {}

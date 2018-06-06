@@ -1,0 +1,6 @@
+---
+# home page deploy script
+# main entry for setup php web servers
+- hosts: etcd_servers
+  roles:
+    - role: etcd

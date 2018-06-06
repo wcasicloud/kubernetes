@@ -1,0 +1,5 @@
+{% if docker_unsafe_reg is defined %}
+DOCKER_OPTS="--graph {{docker_storage}} --insecure-registry {{docker_unsafe_reg}} --registry-mirror {{docker_reg_mirror}} "
+{% else %}
+DOCKER_OPTS="--graph {{docker_storage}} --registry-mirror {{docker_reg_mirror}} "
+{% endif %}

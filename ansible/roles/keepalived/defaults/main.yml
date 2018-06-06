@@ -1,0 +1,9 @@
+---
+notify_email: root@localhost
+notify_email_from: keepalived@localhost
+www_vip: 10.153.51.221
+smtp_server: 127.0.0.1
+vrrp_mcast_group: 224.0.10.18
+interface: eth0
+virtual_router_id: 55
+auth_pass: 11234455

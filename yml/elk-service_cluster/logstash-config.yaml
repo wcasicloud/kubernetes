@@ -1,0 +1,330 @@
+apiVersion: v1
+data:
+  logstash.conf: |
+      input {
+          kafka {
+              bootstrap_servers => "10.0.0.89:9092"
+              group_id => "logstash-service"
+              topics => ["logs"]
+              codec => json
+              codec => multiline {
+                  pattern => "^[0-9]"
+                  negate => true
+                  what => "previous"
+                }
+              }
+      }
+
+
+      filter {
+              mutate {
+                  remove_field => [ "@version" ]
+                  remove_field => [ "_id" ]
+                  remove_field => [ "_score" ]
+                  remove_field => [ "_type" ]
+                  remove_field => [ "docker.container_id" ]
+                  remove_field => [ "kubernetes.annotations.cloud_tencent_com/volume-configmap-info" ]
+                  remove_field => [ "kubernetes.annotations.kubernetes_io/created-by" ]
+                  remove_field => [ "kubernetes.labels.pod-template-hash" ]
+                  remove_field => [ "kubernetes.labels.qcloud-redeploy-timestamp" ]
+                  remove_field => [ "kubernetes.log" ]
+                  remove_field => [ "kubernetes.master_url" ]
+                  remove_field => [ "kubernetes.namespace_name" ]
+                  remove_field => [ "kubernetes.pod_id" ]
+                  remove_field => [ "kubernetes.pod_name" ]
+                  remove_field => [ "stream" ]
+
+              }
+      }
+
+      output {
+          if [kubernetes][container_name] == "user" {
+          elasticsearch {
+              hosts => ["172.18.255.67:9200"]
+              index => "user-%{+YYYY.MM.dd}"
+          }
+          }
+
+          else if [kubernetes][container_name] == "metadata" {
+          elasticsearch {
+              hosts => ["172.18.255.67:9200"]
+              index => "metadata-%{+YYYY.MM.dd}"
+          }
+          }
+
+          else if [kubernetes][container_name] == "email" {
+          elasticsearch {
+              hosts => "http://172.18.255.67:9200"
+              
+              
+              index => "email-%{+YYYY.MM.dd}"
+          }
+          }
+
+
+          else if [kubernetes][container_name] == "auth" {
+          elasticsearch {
+              hosts => "http://172.18.255.67:9200"
+              
+              
+              index => "auth-%{+YYYY.MM.dd}"
+          }
+          }
+
+          else if [kubernetes][container_name] == "calendar" {
+          elasticsearch {
+              hosts => "http://172.18.255.67:9200"
+              
+              
+              index => "calendar-%{+YYYY.MM.dd}"
+          }
+          }
+
+          else if [kubernetes][container_name] == "crm" {
+          elasticsearch {
+              hosts => "http://172.18.255.67:9200"
+              
+              
+              index => "crm-%{+YYYY.MM.dd}"
+          }
+          }
+
+
+          else if [kubernetes][container_name] == "financial" {
+          elasticsearch {
+              hosts => "http://172.18.255.67:9200"
+              
+              
+              index => "financial-%{+YYYY.MM.dd}"
+          }
+          }
+
+          else if [kubernetes][container_name] == "flow-engine" {
+          elasticsearch {
+              hosts => "http://172.18.255.67:9200"
+              
+              
+              index => "flow-engine-%{+YYYY.MM.dd}"
+          }
+          }
+
+          else if [kubernetes][container_name] == "hr" {
+          elasticsearch {
+              hosts => "http://172.18.255.67:9200"
+              
+              
+              index => "hr-%{+YYYY.MM.dd}"
+          }
+          }
+
+
+          else if [kubernetes][container_name] == "integrate" {
+          elasticsearch {
+              hosts => "http://172.18.255.67:9200"
+              
+              
+              index => "integrate-%{+YYYY.MM.dd}"
+          }
+          }
+
+          else if [kubernetes][container_name] == "message" {
+          elasticsearch {
+              hosts => "http://172.18.255.67:9200"
+              
+              
+              index => "message-%{+YYYY.MM.dd}"
+          }
+          }
+
+          else if [kubernetes][container_name] == "order" {
+          elasticsearch {
+              hosts => "http://172.18.255.67:9200"
+              codec => rubydebug
+              index => "order-%{+YYYY.MM.dd}"
+          }
+          }
+
+          else if [kubernetes][container_name] == "oss" {
+          elasticsearch {
+              hosts => "http://172.18.255.67:9200"
+              
+              
+              index => "oss-%{+YYYY.MM.dd}"
+          }
+          }
+
+          else if [kubernetes][container_name] == "sso" {
+          elasticsearch {
+              hosts => "http://172.18.255.67:9200"
+              
+              
+              index => "sso-%{+YYYY.MM.dd}"
+          }
+          }
+
+          else if [kubernetes][container_name] == "payment" {
+          elasticsearch {
+              hosts => "http://172.18.255.67:9200"
+              
+              
+              index => "payment-%{+YYYY.MM.dd}"
+          }
+          }
+
+
+          else if [kubernetes][container_name] == "person" {
+          elasticsearch {
+              hosts => "http://172.18.255.67:9200"
+              
+              
+              index => "person-%{+YYYY.MM.dd}"
+          }
+          }
+
+
+          else if [kubernetes][container_name] == "privilege" {
+          elasticsearch {
+              hosts => "http://172.18.255.67:9200"
+              
+              
+              index => "privilege-%{+YYYY.MM.dd}"
+          }
+          }
+
+
+          else if [kubernetes][container_name] == "product" {
+          elasticsearch {
+              hosts => "http://172.18.255.67:9200"
+              
+              
+              index => "product-%{+YYYY.MM.dd}"
+          }
+          }
+
+
+          else if [kubernetes][container_name] == "promotion" {
+          elasticsearch {
+              hosts => "http://172.18.255.67:9200"
+              
+              
+              index => "promotion-%{+YYYY.MM.dd}"
+          }
+          }
+
+
+          else if [kubernetes][container_name] == "raffle" {
+          elasticsearch {
+              hosts => "http://172.18.255.67:9200"
+              
+              
+              index => "raffle-%{+YYYY.MM.dd}"
+          }
+          }
+
+
+          else if [kubernetes][container_name] == "region" {
+          elasticsearch {
+              hosts => "http://172.18.255.67:9200"
+              
+              
+              index => "region-%{+YYYY.MM.dd}"
+          }
+          }
+
+
+          else if [kubernetes][container_name] == "remark" {
+          elasticsearch {
+              hosts => "http://172.18.255.67:9200"
+              
+              
+              index => "remark-%{+YYYY.MM.dd}"
+          }
+          }
+
+
+          else if [kubernetes][container_name] == "rest" {
+          elasticsearch {
+              hosts => "http://172.18.255.67:9200"
+              
+              
+              index => "rest-%{+YYYY.MM.dd}"
+          }
+          }
+
+
+          else if [kubernetes][container_name] == "route" {
+          elasticsearch {
+              hosts => "http://172.18.255.67:9200"
+              
+              
+              index => "route-%{+YYYY.MM.dd}"
+          }
+          }
+
+
+          else if [kubernetes][container_name] == "tag" {
+          elasticsearch {
+              hosts => "http://172.18.255.67:9200"
+              
+              
+              index => "tag-%{+YYYY.MM.dd}"
+          }
+          }
+
+
+
+          else if [kubernetes][container_name] == "tenant" {
+          elasticsearch {
+              hosts => "http://172.18.255.67:9200"
+              
+              
+              index => "tenant-%{+YYYY.MM.dd}"
+          }
+          }
+
+
+          else if [kubernetes][container_name] == "tenant-management" {
+          elasticsearch {
+              hosts => "http://172.18.255.67:9200"
+              
+              
+              index => "tenant-management-%{+YYYY.MM.dd}"
+          }
+          }
+
+
+      }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+kind: ConfigMap
+metadata:
+  name: logstash-consumer-config

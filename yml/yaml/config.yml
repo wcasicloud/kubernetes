@@ -1,0 +1,29 @@
+apiVersion: kubeadm.k8s.io/v1alpha1
+kind: MasterConfiguration
+etcd:
+  endpoints:
+  - https://10.153.51.17:2379
+  - https://10.153.51.18:2379
+  - https://10.153.51.19:2379
+  caFile: /etc/kubernetes/ssl/ca.pem
+  certFile: /etc/kubernetes/ssl/kubernetes.pem
+  keyFile: /etc/kubernetes/ssl/kubernetes-key.pem
+  dataDir: /var/lib/etcd
+networking:
+  podSubnet: 10.244.0.0/16
+kubernetesVersion: 1.10.0
+api:
+  advertiseAddress: "10.153.51.221"
+token: "b99a00.a144ef80536d4344"
+tokenTTL: "0s"
+apiServerCertSANs:
+- master01.k8s.htyunlu.com
+- master02.k8s.htyunlu.com
+- master03.k8s.htyunlu.com
+- 10.153.51.20
+- 10.153.51.21
+- 10.153.51.217
+- 10.153.51.221
+featureGates:
+  CoreDNS: true
+imageRepository: "registry.cn-hangzhou.aliyuncs.com/k8sth"
