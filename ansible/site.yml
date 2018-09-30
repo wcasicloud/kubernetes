@@ -1,6 +1,0 @@
----
-# home page deploy script
-# main entry for setup php web servers
-- hosts: all
-  roles:
-    - role: docker
